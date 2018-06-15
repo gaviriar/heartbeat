@@ -10,7 +10,7 @@ set(PROJECT_PATH                               "${CMAKE_CURRENT_SOURCE_DIR}")
 #set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}     "${PROJECT_PATH}/cmake/Modules")
 
 if(NOT MSVC)
-  set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "--std=c++11")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11 -pthread")
 endif()
 
 OPTION(BUILD_TESTS                             "Build tests"                    OFF )
@@ -42,11 +42,19 @@ set(MAIN_SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp"
 )
 
+set(SERVER_SRC "${CMAKE_CURRENT_SOURCE_DIR}/serveur.cpp")
+set(CLIENT_SRC "${CMAKE_CURRENT_SOURCE_DIR}/client.cpp")
+
 add_library(${PROJECT_NAME} ${${PROJECT_NAME}_SRC})
 target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
 #add_dependencies(${PROJECT_NAME})
 add_executable(${PROJECT_NAME}_main ${MAIN_SRC})
 target_link_libraries(${PROJECT_NAME}_main ${PROJECT_NAME} ${OpenCV_LIBS})
+
+add_executable(${PROJECT_NAME}_client ${CLIENT_SRC})
+target_link_libraries(${PROJECT_NAME}_client ${OpenCV_LIBS})
+add_executable(${PROJECT_NAME}_server ${SERVER_SRC})
+target_link_libraries(${PROJECT_NAME}_server ${OpenCV_LIBS})
 
 # Build Tests
 if(BUILD_TESTS)
