@@ -1,6 +1,6 @@
 //
 //  RPPG.cpp
-//  Heartbeat
+//  ArgParser
 //
 //  Created by Philipp Rouast on 7/07/2016.
 //  Copyright © 2016 Philipp Roüast. All rights reserved.
@@ -12,6 +12,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/video/video.hpp>
+#include <g3log/g3log.hpp>
 
 #include "opencv.hpp"
 
@@ -83,14 +84,14 @@ void RPPG::processFrame(Mat &frameRGB, Mat &frameGray, int time) {
 
     if (!faceValid) {
 
-        cout << "Not valid, finding a new face" << endl;
+        LOG(INFO) << "Not valid, finding a new face" << endl;
 
         lastScanTime = time;
         detectFace(frameGray);
 
     } else if ((time - lastScanTime) * timeBase >= 1/rescanFrequency) {
 
-        cout << "Valid, but rescanning face" << endl;
+        LOG(INFO) << "Valid, but rescanning face" << endl;
 
         lastScanTime = time;
         detectFace(frameGray);
@@ -98,7 +99,7 @@ void RPPG::processFrame(Mat &frameRGB, Mat &frameGray, int time) {
 
     } else {
 
-        cout << "Tracking face" << endl;
+        LOG(INFO) << "Tracking face" << endl;
 
         trackFace(frameGray);
     }
@@ -169,7 +170,7 @@ void RPPG::processFrame(Mat &frameRGB, Mat &frameGray, int time) {
 
 void RPPG::detectFace(Mat &frameGray) {
 
-    cout << "Scanning for faces…" << endl;
+    LOG(INFO) << "Scanning for faces…" << endl;
 
     // Detect faces with Haar classifier
     vector<Rect> boxes;
@@ -177,7 +178,7 @@ void RPPG::detectFace(Mat &frameGray) {
 
     if (boxes.size() > 0) {
 
-        cout << "Found a face" << endl;
+        LOG(INFO) << "Found a face" << endl;
 
         setNearestBox(boxes);
         detectCorners(frameGray);
@@ -187,7 +188,7 @@ void RPPG::detectFace(Mat &frameGray) {
 
     } else {
 
-        cout << "Found no face" << endl;
+        LOG(INFO) << "Found no face" << endl;
         invalidateFace();
     }
 }
@@ -264,7 +265,7 @@ void RPPG::trackFace(Mat &frameGray) {
             corners_0v.push_back(corners_0[j]);
             corners_1v.push_back(corners_1[j]);
         } else {
-            cout << "Mis!" << std::endl;
+            LOG(WARNING) << "Mis!" << std::endl;
         }
     }
 
@@ -299,7 +300,7 @@ void RPPG::trackFace(Mat &frameGray) {
         }
 
     } else {
-        cout << "Tracking failed! Not enough corners left." << endl;
+        LOG(WARNING) << "Tracking failed! Not enough corners left." << endl;
         invalidateFace();
     }
 }
@@ -311,7 +312,7 @@ void RPPG::updateROI() {
 
 void RPPG::updateMask(Mat &frameGray) {
 
-    cout << "Update mask" << endl;
+    LOG(INFO) << "Update mask" << endl;
 
     mask = Mat::zeros(frameGray.size(), frameGray.type());
     rectangle(mask, this->roi, WHITE, FILLED);
@@ -505,7 +506,7 @@ void RPPG::estimateHeartrate() {
         bpm = pmax.y * fps / total * SEC_PER_MIN;
         bpms.push_back(bpm);
 
-        cout << "FPS=" << fps << " Vals=" << powerSpectrum.rows << " Peak=" << pmax.y << " BPM=" << bpm << endl;
+        LOG(INFO) << "FPS=" << fps << " Vals=" << powerSpectrum.rows << " Peak=" << pmax.y << " BPM=" << bpm << endl;
 
         // Logging
         if (logMode) {
@@ -534,7 +535,7 @@ void RPPG::estimateHeartrate() {
         minBpm = bpms.at<double>(0, 0);
         maxBpm = bpms.at<double>(bpms.rows-1, 0);
 
-        std::cout << "meanBPM=" << meanBpm << " minBpm=" << minBpm << " maxBpm=" << maxBpm << std::endl;
+        LOG(INFO) << "meanBPM=" << meanBpm << " minBpm=" << minBpm << " maxBpm=" << maxBpm << std::endl;
 
         bpms.pop_back(bpms.rows);
     }

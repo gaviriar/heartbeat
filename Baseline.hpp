@@ -1,6 +1,6 @@
 //
 //  Baseline.hpp
-//  Heartbeat
+//  ArgParser
 //
 //  Created by Philipp Rouast on 17/09/2016.
 //  Copyright © 2016 Philipp Roüast. All rights reserved.
@@ -22,6 +22,9 @@ enum class CSVState {
     QuotedQuote
 };
 
+/**
+ * Class for estimating a comparison against the baseline
+ */
 class Baseline {
     
 public:
@@ -31,7 +34,7 @@ public:
     
     bool load(const double samplingFrequency, const double timeBase, const string baseline_path);
     
-    // Process a frame
+    // Process a frame and print baseline to the Image
     void processFrame(Mat &frameRGB, int64_t time);
     
 private:
@@ -43,7 +46,7 @@ private:
     double timeBase;
     
     // Data
-    vector<vector<string>> data;
+    vector<vector<string>> data; // holds the ppg data: time, ppg, ecg
     int dataIndex = 2;
     
     // State variables

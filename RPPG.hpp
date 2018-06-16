@@ -1,6 +1,6 @@
 //
 //  RPPG.hpp
-//  Heartbeat
+//  ArgParser
 //
 //  Created by Philipp Rouast on 7/07/2016.
 //  Copyright © 2016 Philipp Roüast. All rights reserved.

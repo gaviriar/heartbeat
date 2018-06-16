@@ -1,6 +1,6 @@
 //
 //  Baseline.cpp
-//  Heartbeat
+//  ArgParser
 //
 //  Created by Philipp Rouast on 17/09/2016.
 //  Copyright © 2016 Philipp Roüast. All rights reserved.
@@ -9,8 +9,10 @@
 #include "Baseline.hpp"
 
 #include <fstream>
-#include "opencv.hpp"
 #include <opencv2/imgproc/imgproc.hpp>
+#include <g3log/g3log.hpp>
+
+#include "opencv.hpp"
 
 bool Baseline::load(const double samplingFrequency, const double timeBase, const string baseline_path) {
 
@@ -37,7 +39,7 @@ void Baseline::processFrame(Mat &frameRGB, int64_t time) {
     // Set time
     this->time = time + 1466005435646000;
 
-    cout << data[dataIndex][1] << " vs " << this->time << endl;
+    LOG(INFO) << data[dataIndex][1] << " vs " << this->time << endl;
 
     // Read new values in buffer
     while (stol(data[dataIndex][1]) <= this->time) {
@@ -46,7 +48,7 @@ void Baseline::processFrame(Mat &frameRGB, int64_t time) {
         dataIndex++;
     }
 
-    cout << bpms_ppg.size() << " di=" << dataIndex << endl;
+    LOG(INFO) << bpms_ppg.size() << " di=" << dataIndex << endl;
 
     if ((time - lastSamplingTime) * timeBase >= 1/samplingFrequency) {
         lastSamplingTime = time;

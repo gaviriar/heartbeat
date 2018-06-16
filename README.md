@@ -1,4 +1,4 @@
-# Heartbeat: Measuring heart rate using remote photoplethysmography (rPPG)
+# ArgParser: Measuring heart rate using remote photoplethysmography (rPPG)
 
 [![N|Solid](https://s12.postimg.org/gh7ymb02h/Logo.jpg)](https://github.com/prouast/heartbeat)
 
@@ -20,11 +20,17 @@ If you are interested in the specifics, feel free to have a read of our publicat
 * [Real-time rPPG in action][video1]
 * [Offline rPPG With physiological baseline measurements][video2]
 
+
+###
+https://go.yuri.at/streaming-ffmpeg-with-nodejs-on-web-sockets-to-html/
+
+
 ### Dependencies
 
-The following libraries are required to run Heartbeat:
+The following libraries are required to run HeartBeat:
 
 * [OpenCV]
+* [G3Log] - needs to be installed
 
 They must be installed on the system such that headers and libraries are found on the compiler's standard search path.
 
@@ -34,12 +40,20 @@ Compile the source code for your system, providing a number of required linker f
 This works with opencv 3.4.1 on macOS:
 
 ```sh
-$ g++ -std=c++11 -lopencv_core -lopencv_highgui -lopencv_imgcodecs -lopencv_imgproc -lopencv_objdetect -lopencv_video -lopencv_videoio -lavcodec Heartbeat.cpp opencv.cpp RPPG.cpp Baseline.cpp -o Heartbeat
+$ g++ -std=c++11 -lopencv_core -lopencv_highgui -lopencv_imgcodecs -lopencv_imgproc -lopencv_objdetect -lopencv_video -lopencv_videoio -lavcodec ArgParser.cpp opencv.cpp RPPG.cpp Baseline.cpp -o ArgParser
 ```
 
 Alternative compilation for Ubuntu. Works with opencv 3.1:
 ```sh
-$ g++ -std=c++11 Heartbeat.cpp opencv.cpp RPPG.cpp Baseline.cpp `pkg-config --cflags --libs opencv` -o Heartbeat
+$ g++ -std=c++11 ArgParser.cpp opencv.cpp RPPG.cpp Baseline.cpp `pkg-config --cflags --libs opencv` -o ArgParser
+```
+
+or using CMake
+
+```sh
+mkdir build
+cmake ..
+make
 ```
 
 License

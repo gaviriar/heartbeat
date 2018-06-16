@@ -1,12 +1,16 @@
 //
 // Created by unitelabs on 15/06/18.
 //
-#include "Baseline.hpp"
-#include "Heartbeat.hpp"
-
 #include <opencv2/videoio/videoio.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <g3log/g3log.hpp>
+#include <g3log/logworker.hpp>
+#include <memory>
+
+#include "Baseline.hpp"
+#include "ArgParser.hpp"
+#include "CustomSink.hpp"
 
 #define DEFAULT_ALGORITHM "g"
 #define DEFAULT_RESCAN_FREQUENCY 1
@@ -30,8 +34,8 @@ rPPGAlgorithm to_algorithm(string s) {
     else if (s == "pca") result = pca;
     else if (s == "xminay") result = xminay;
     else {
-        std::cout << "Please specify valid algorithm (g, pca, xminay)!" << std::endl;
-        exit(0);
+        LOG(DEBUG) << "Please specify valid algorithm (g, pca, xminay)!" << std::endl;
+        exit(-1);
     }
     return result;
 }
@@ -39,25 +43,35 @@ rPPGAlgorithm to_algorithm(string s) {
 using namespace cv;
 
 int main(int argc, char * argv[]) {
+    ArgParser arg_parser(argc, argv);
+    using namespace g3;
+    std::unique_ptr<LogWorker> logworker{ LogWorker::createLogWorker() };
+    auto sinkHandle = logworker->addSink(
+            std::unique_ptr<CustomSink>(new CustomSink()),
+            &CustomSink::ReceiveLogMessage);
 
-    Heartbeat cmd_line(argc, argv, true);
+    // initialize the logger before it can receive LOG calls
+    initializeLogging(logworker.get());
+    LOG(WARNING) << "This log call, may or may not happend before"
+                 << "the sinkHandle->call below";
 
-    string input = cmd_line.get_arg("-i"); // Filepath for offline mode
+
+    string input = arg_parser.get_arg("-i"); // Filepath for offline mode
 
     // algorithm setting
     rPPGAlgorithm algorithm;
-    string algorithmString = cmd_line.get_arg("-a");
+    string algorithmString = arg_parser.get_arg("-a");
     if (algorithmString != "") {
         algorithm = to_algorithm(algorithmString);
     } else {
         algorithm = to_algorithm(DEFAULT_ALGORITHM);
     }
 
-    cout << "Using algorithm " << algorithm << "." << endl;
+    LOG(DEBUG) << "Using algorithm " << algorithm << "." << endl;
 
     // rescanFrequency setting
     double rescanFrequency;
-    string rescanFrequencyString = cmd_line.get_arg("-r");
+    string rescanFrequencyString = arg_parser.get_arg("-r");
     if (rescanFrequencyString != "") {
         rescanFrequency = atof(rescanFrequencyString.c_str());
     } else {
@@ -66,7 +80,7 @@ int main(int argc, char * argv[]) {
 
     // samplingFrequency setting
     double samplingFrequency;
-    string samplingFrequencyString = cmd_line.get_arg("-f").c_str();
+    string samplingFrequencyString = arg_parser.get_arg("-f").c_str();
     if (samplingFrequencyString != "") {
         samplingFrequency = atof(samplingFrequencyString.c_str());
     } else {
@@ -75,7 +89,7 @@ int main(int argc, char * argv[]) {
 
     // max signal size setting
     int maxSignalSize;
-    string maxSignalSizeString = cmd_line.get_arg("-max");
+    string maxSignalSizeString = arg_parser.get_arg("-max");
     if (maxSignalSizeString != "") {
         maxSignalSize = atof(maxSignalSizeString.c_str());
     } else {
@@ -84,7 +98,7 @@ int main(int argc, char * argv[]) {
 
     // min signal size setting
     int minSignalSize;
-    string minSignalSizeString = cmd_line.get_arg("-min");
+    string minSignalSizeString = arg_parser.get_arg("-min");
     if (minSignalSizeString != "") {
         minSignalSize = atof(minSignalSizeString.c_str());
     } else {
@@ -92,16 +106,16 @@ int main(int argc, char * argv[]) {
     }
 
     // visualize baseline setting
-    string baseline_input = cmd_line.get_arg("-baseline");
+    string baseline_input = arg_parser.get_arg("-baseline");
 
     if (minSignalSize > maxSignalSize) {
-        std::cout << "Max signal size must be greater or equal min signal size!" << std::endl;
+        LOG(FATAL) << "Max signal size must be greater or equal min signal size!" << std::endl;
         exit(0);
     }
 
     // Reading gui setting
     bool gui;
-    string guiString = cmd_line.get_arg("-gui");
+    string guiString = arg_parser.get_arg("-gui");
     if (guiString != "") {
         gui = to_bool(guiString);
     } else {
@@ -110,7 +124,7 @@ int main(int argc, char * argv[]) {
 
     // Reading log setting
     bool log;
-    string logString = cmd_line.get_arg("-log");
+    string logString = arg_parser.get_arg("-log");
     if (logString != "") {
         log = to_bool(logString);
     } else {
@@ -119,18 +133,20 @@ int main(int argc, char * argv[]) {
 
     // Reading downsample setting
     int downsample;
-    string downsampleString = cmd_line.get_arg("-ds");
+    string downsampleString = arg_parser.get_arg("-ds");
     if (downsampleString != "") {
         downsample = atof(downsampleString.c_str());
     } else {
         downsample = DEFAULT_DOWNSAMPLE;
     }
 
+    // End of argument parsing
+
     const string CLASSIFIER_PATH = "haarcascade_frontalface_alt.xml";
 
     std::ifstream test(CLASSIFIER_PATH);
     if (!test) {
-        std::cout << "Face classifier xml not found!" << std::endl;
+        LOG(FATAL) << "Face classifier xml not found!" << std::endl;
         exit(0);
     }
 
@@ -144,8 +160,8 @@ int main(int argc, char * argv[]) {
     }
 
     std::string title = offlineMode ? "rPPG offline" : "rPPG online";
-    cout << title << endl;
-    cout << "Processing " << (offlineMode ? input : "live feed") << endl;
+    LOG(INFO) << title << endl;
+    LOG(INFO) << "Processing " << (offlineMode ? input : "live feed") << endl;
 
     // Configure logfile path
     string LOG_PATH;
@@ -164,9 +180,9 @@ int main(int argc, char * argv[]) {
     const double TIME_BASE = 0.001;
 
     // Print video information
-    cout << "SIZE: " << WIDTH << "x" << HEIGHT << endl;
-    cout << "FPS: " << FPS << endl;
-    cout << "TIME BASE: " << TIME_BASE << endl;
+    LOG(INFO) << "SIZE: " << WIDTH << "x" << HEIGHT << endl;
+    LOG(INFO) << "FPS: " << FPS << endl;
+    LOG(INFO) << "TIME BASE: " << TIME_BASE << endl;
 
     std::ostringstream window_title;
     window_title << title << " - " << WIDTH << "x" << HEIGHT << " -a " << algorithm << " -r " << rescanFrequency << " -f " << samplingFrequency << " -min " << minSignalSize << " -max " << maxSignalSize << " -ds " << downsample;
@@ -186,7 +202,7 @@ int main(int argc, char * argv[]) {
         baseline.load(1, 0.000001, baseline_input);
     }
 
-    cout << "START ALGORITHM" << endl;
+    LOG(INFO) << "START ALGORITHM" << endl;
 
     int i = 0;
     Mat frameRGB, frameGray;
@@ -210,7 +226,7 @@ int main(int argc, char * argv[]) {
         if (i % downsample == 0) {
             rppg.processFrame(frameRGB, frameGray, time);
         } else {
-            cout << "SKIPPING FRAME TO DOWNSAMPLE!" << endl;
+            LOG(INFO) << "SKIPPING FRAME TO DOWNSAMPLE!" << endl;
         }
 
         if (baseline_input != "") {

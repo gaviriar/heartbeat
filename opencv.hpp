@@ -1,6 +1,6 @@
 //
 //  opencv.hpp
-//  Heartbeat
+//  ArgParser
 //
 //  Created by Philipp Rouast on 3/03/2016.
 //  Copyright © 2016 Philipp Roüast. All rights reserved.
@@ -25,13 +25,11 @@ namespace cv {
     const Scalar ONE      (1);
 
     /* COMMON FUNCTIONS */
-
     double getFps(cv::Mat &t, const double timeBase);
     void push(cv::Mat &m);
     void plot(cv::Mat &mat);
     
     /* FILTERS */
-
     void normalization(cv::InputArray _a, cv::OutputArray _b);
     void denoise(cv::InputArray _a, cv::InputArray _jumps, cv::OutputArray _b);
     void detrend(cv::InputArray _a, cv::OutputArray _b, int lambda);
@@ -44,7 +42,6 @@ namespace cv {
     void pcaComponent(cv::InputArray _a, cv::OutputArray _b, cv::OutputArray _pc, int low, int high);
 
     /* LOGGING */
-
     void printMatInfo(const std::string &name, InputArray _a);
 
     template<typename T>

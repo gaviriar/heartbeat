@@ -6,19 +6,23 @@ project (Heartbeat)
 
 #include files
 set(PROJECT_PATH                               "${CMAKE_CURRENT_SOURCE_DIR}")
-#set(EXTERNAL_PATH                              "${PROJECT_PATH}/external")
-#set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}     "${PROJECT_PATH}/cmake/Modules")
+set(EXTERNAL_PATH                              "/home/unitelabs/projects/libwebrtc/_build")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}     "${PROJECT_PATH}/cmake")
 
 if(NOT MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11 -pthread")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++14 -pthread")
 endif()
 
 OPTION(BUILD_TESTS                             "Build tests"                    OFF )
 OPTION(BUILD_DEPENDENCIES                      "Force build of dependencies"    OFF)
 #include(Dependencies.cmake)
 find_package(OpenCV REQUIRED)
+#find_package(WebRTC REQUIRED)
+find_package(g3logger REQUIRED)
 
 message("OpenCV Libs: ${OpenCV_LIBS}")
+#message("WebRTC Libs: ${WebRTC_LIBS}")
+message("G3LOG Libs: ${G3LOG_LIBRARIES}")
 
 # Check if project name has been specified correctly.
 if((NOT PROJECT_NAME))
@@ -33,23 +37,23 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 set(${PROJECT_NAME}_SRC 
     "${CMAKE_CURRENT_SOURCE_DIR}/Baseline.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/Heartbeat.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/ArgParser.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/RPPG.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/opencv.cpp"
-    )
+        CustomSink.hpp)
 
 set(MAIN_SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp"
-)
+        CustomSink.hpp)
 
 set(SERVER_SRC "${CMAKE_CURRENT_SOURCE_DIR}/serveur.cpp")
 set(CLIENT_SRC "${CMAKE_CURRENT_SOURCE_DIR}/client.cpp")
 
 add_library(${PROJECT_NAME} ${${PROJECT_NAME}_SRC})
-target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
+target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} ${G3LOG_LIBRARIES})
 #add_dependencies(${PROJECT_NAME})
 add_executable(${PROJECT_NAME}_main ${MAIN_SRC})
-target_link_libraries(${PROJECT_NAME}_main ${PROJECT_NAME} ${OpenCV_LIBS})
+target_link_libraries(${PROJECT_NAME}_main ${PROJECT_NAME} ${OpenCV_LIBS} ${G3LOG_LIBRARIES})
 
 add_executable(${PROJECT_NAME}_client ${CLIENT_SRC})
 target_link_libraries(${PROJECT_NAME}_client ${OpenCV_LIBS})
