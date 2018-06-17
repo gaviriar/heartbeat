@@ -13,11 +13,12 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/video/video.hpp>
 #include <g3log/g3log.hpp>
+#include <g3log/logworker.hpp>
+
 
 #include "opencv.hpp"
+#include "CsvSink.hpp"
 
-using namespace cv;
-using namespace std;
 
 #define LOW_BPM 42
 #define HIGH_BPM 240
@@ -28,12 +29,21 @@ using namespace std;
 #define QUALITY_LEVEL 0.01
 #define MIN_DISTANCE 25
 
+// LOG(level) is the API for the stream log
+#define LOGTOCSV(level, instance, ...) instance->call(&CsvSink::write, ##__VA_ARGS__);
+
+using namespace cv;
+using namespace std;
+using namespace cvutils;
+using namespace g3;
+
 bool RPPG::load(const rPPGAlgorithm algorithm,
                 const int width, const int height, const double timeBase, const int downsample,
                 const double samplingFrequency, const double rescanFrequency,
                 const int minSignalSize, const int maxSignalSize,
                 const string &logPath, const string &classifierPath,
-                const bool log, const bool gui) {
+                const bool log, const bool gui,
+                LogWorker& logWorker) {
 
     this->algorithm = algorithm;
     this->guiMode = gui;
@@ -49,7 +59,7 @@ bool RPPG::load(const rPPGAlgorithm algorithm,
 
     // Load classifiers
     classifier.load(classifierPath);
-
+    // Prepare logger
     // Setting up logfilepath
     ostringstream path_1;
     path_1 << logPath << "_a=" << algorithm << "_min=" << minSignalSize << "_max=" << maxSignalSize << "_ds=" << downsample;
@@ -58,6 +68,13 @@ bool RPPG::load(const rPPGAlgorithm algorithm,
     // Logging bpm according to sampling frequency
     std::ostringstream path_2;
     path_2 << logfilepath << "_bpm.csv";
+
+    auto bpmHandler = logWorker.addSink(
+            std::unique_ptr<CsvSink>(new CsvSink(path_2.str())),
+            &CsvSink::receiveCsvLine);
+
+    LOGTOCSV(INFO, bpmHandler, "time", "face_valid", "mean", "min", "max");
+    
     logfile.open(path_2.str());
     logfile << "time;face_valid;mean;min;max\n";
     logfile.flush();
@@ -330,6 +347,11 @@ void RPPG::invalidateFace() {
 
 void RPPG::extractSignal_g() {
 
+    /**
+     * @todo could make these matrices member variables which can be
+     * reused on every new frame.
+     *
+     */
     // Denoise
     Mat s_den = Mat(s.rows, 1, CV_64F);
     denoise(s.col(1), re, s_den);

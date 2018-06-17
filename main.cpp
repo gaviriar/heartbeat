@@ -49,7 +49,6 @@ int main(int argc, char * argv[]) {
     auto sinkHandle = logworker->addSink(
             std::unique_ptr<CustomSink>(new CustomSink()),
             &CustomSink::ReceiveLogMessage);
-
     // initialize the logger before it can receive LOG calls
     initializeLogging(logworker.get());
     LOG(WARNING) << "This log call, may or may not happend before"
@@ -169,7 +168,7 @@ int main(int argc, char * argv[]) {
         LOG_PATH = input.substr(0, input.find_last_of("."));
     } else {
         std::ostringstream filepath;
-        filepath << "Live_ffmpeg";
+        filepath << "heartbeat";
         LOG_PATH = filepath.str();
     }
 

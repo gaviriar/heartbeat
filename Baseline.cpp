@@ -64,12 +64,12 @@ void Baseline::processFrame(Mat &frameRGB, int64_t time) {
     std::stringstream ss;
     ss.precision(3);
     ss << "PPG baseline: " << bpm_ppg << " bpm";
-    cv::putText(frameRGB, ss.str(), Point(frameRGB.cols - 400, frameRGB.rows - 30), FONT_HERSHEY_PLAIN, 2, RED, 2);
+    cv::putText(frameRGB, ss.str(), Point(frameRGB.cols - 400, frameRGB.rows - 30), FONT_HERSHEY_PLAIN, 2, cvutils::RED, 2);
 
     // Draw PPG
     ss.str("");
     ss << "ECG baseline: " << bpm_ecg << " bpm";
-    cv::putText(frameRGB, ss.str(), Point(frameRGB.cols - 400, frameRGB.rows - 10), FONT_HERSHEY_PLAIN, 2, RED, 2);
+    cv::putText(frameRGB, ss.str(), Point(frameRGB.cols - 400, frameRGB.rows - 10), FONT_HERSHEY_PLAIN, 2, cvutils::RED, 2);
 }
 
 vector<string> Baseline::readCSVRow(const std::string &row) {

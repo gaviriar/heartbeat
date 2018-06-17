@@ -12,9 +12,10 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-using namespace std;
 
-namespace cv {
+namespace cvutils {
+    using namespace std;
+    using namespace cv;
 
     /* COMMON FUNCTIONS */
 
@@ -181,7 +182,7 @@ namespace cv {
         filter = off - in;
     }
 
-    void timeToFrequency(InputArray _a, OutputArray _b, bool magnitude) {
+    void timeToFrequency(InputArray _a, OutputArray _b, const bool magnitude) {
 
         // Prepare planes
         Mat a = _a.getMat();
@@ -237,7 +238,7 @@ namespace cv {
         for (int i = 0; i < pc.cols; i++) {
             cv::Mat magnitude = Mat(pc.rows, 1, CV_32F);
             // Calculate spectral magnitudes
-            cv::timeToFrequency(pc.col(i), magnitude, true);
+            timeToFrequency(pc.col(i), magnitude, true);
             // Normalize
             //printMat<float>("magnitude1", magnitude);
             cv::normalize(magnitude, magnitude, 1, 0, NORM_L1, -1, bandMask);

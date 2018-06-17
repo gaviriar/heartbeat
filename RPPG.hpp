@@ -9,15 +9,16 @@
 #ifndef RPPG_hpp
 #define RPPG_hpp
 
+#include <stdio.h>
 #include <fstream>
 #include <string>
+
 #include <opencv2/objdetect/objdetect.hpp>
+#include <g3log/logworker.hpp>
 
-#include <stdio.h>
-
-using namespace cv;
-using namespace std;
-
+/**
+ * RPPG class performs heartrate calculation from input image
+ */
 enum rPPGAlgorithm { g, pca, xminay };
 
 class RPPG {
@@ -32,28 +33,35 @@ public:
               const int width, const int height, const double timeBase, const int downsample,
               const double samplingFrequency, const double rescanFrequency,
               const int minSignalSize, const int maxSignalSize,
-              const string &logPath, const string &classifierPath,
-              const bool log, const bool gui);
+              const std::string &logPath, const std::string &classifierPath,
+              const bool log, const bool gui, g3::LogWorker& logWorker);
 
-    void processFrame(Mat &frameRGB, Mat &frameGray, int time);
+    /**
+     * Process frame and estimate the heartrate
+     *
+     * @param frameRGB
+     * @param frameGray
+     * @param time
+     */
+    void processFrame(cv::Mat &frameRGB, cv::Mat &frameGray, int time);
 
     void exit();
 
-    typedef vector<Point2f> Contour2f;
+    typedef std::vector<cv::Point2f> Contour2f;
 
 private:
 
-    void detectFace(Mat &frameGray);
-    void setNearestBox(vector<Rect> boxes);
-    void detectCorners(Mat &frameGray);
-    void trackFace(Mat &frameGray);
-    void updateMask(Mat &frameGray);
+    void detectFace(cv::Mat &frameGray);
+    void setNearestBox(std::vector<cv::Rect> boxes);
+    void detectCorners(cv::Mat &frameGray);
+    void trackFace(cv::Mat &frameGray);
+    void updateMask(cv::Mat &frameGray);
     void updateROI();
     void extractSignal_g();
     void extractSignal_pca();
     void extractSignal_xminay();
     void estimateHeartrate();
-    void draw(Mat &frameRGB);
+    void draw(cv::Mat &frameRGB);
     void invalidateFace();
     void log();
 
@@ -61,10 +69,10 @@ private:
     rPPGAlgorithm algorithm;
 
     // The classifiers
-    CascadeClassifier classifier;
+    cv::CascadeClassifier classifier;
 
     // Settings
-    Size minFaceSize;
+    cv::Size minFaceSize;
     int maxSignalSize;
     int minSignalSize;
     double rescanFrequency;
@@ -85,32 +93,32 @@ private:
     bool rescanFlag;
 
     // Tracking
-    Mat lastFrameGray;
+    cv::Mat lastFrameGray;
     Contour2f corners;
 
     // Mask
-    Rect box;
-    Mat1b mask;
-    Rect roi;
+    cv::Rect box;
+    cv::Mat1b mask;
+    cv::Rect roi;
 
     // Raw signal
-    Mat1d s;
-    Mat1d t;
-    Mat1b re;
+    cv::Mat1d s;
+    cv::Mat1d t;
+    cv::Mat1b re;
 
     // Estimation
-    Mat1d s_f;
-    Mat1d bpms;
-    Mat1d powerSpectrum;
+    cv::Mat1d s_f;
+    cv::Mat1d bpms;
+    cv::Mat1d powerSpectrum;
     double bpm = 0.0;
     double meanBpm;
     double minBpm;
     double maxBpm;
 
     // Logfiles
-    ofstream logfile;
-    ofstream logfileDetailed;
-    string logfilepath;
+    std::ofstream logfile;
+    std::ofstream logfileDetailed;
+    std::string logfilepath;
 };
 
 
