@@ -4,6 +4,7 @@
 #include <opencv2/videoio/videoio.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#define G3_DYNAMIC_LOGGING
 #include <g3log/g3log.hpp>
 #include <g3log/logworker.hpp>
 #include <memory>
@@ -19,6 +20,7 @@
 #define DEFAULT_MAX_SIGNAL_SIZE 5
 #define DEFAULT_DOWNSAMPLE 1 // x means only every xth frame is used
 
+const LEVELS NOLOG {g3::kFatalValue + 1, "NoLogsLevel"};
 
 bool to_bool(string s) {
     bool result;
@@ -40,17 +42,12 @@ rPPGAlgorithm to_algorithm(string s) {
     return result;
 }
 
+using namespace g3;
 using namespace cv;
 
 int main(int argc, char * argv[]) {
     ArgParser arg_parser(argc, argv);
-    using namespace g3;
-    std::unique_ptr<LogWorker> logworker{ LogWorker::createLogWorker() };
-    auto sinkHandle = logworker->addSink(
-            std::unique_ptr<CustomSink>(new CustomSink()),
-            &CustomSink::ReceiveLogMessage);
-    // initialize the logger before it can receive LOG calls
-    initializeLogging(logworker.get());
+    g3::only_change_at_initialization::addLogLevel(NOLOG);
     LOG(WARNING) << "This log call, may or may not happend before"
                  << "the sinkHandle->call below";
 
@@ -138,6 +135,30 @@ int main(int argc, char * argv[]) {
     } else {
         downsample = DEFAULT_DOWNSAMPLE;
     }
+
+    LEVELS level = NOLOG;
+    string level_str = arg_parser.get_arg("-v");
+    log_levels::disableAll();
+    if (level_str != "") {
+        cout << "level input: " << stoi(level_str) << endl;
+        // should use masks to make this more sophisticated
+        switch (stoi(level_str)){
+            case g3::kDebugValue: level = DEBUG; break;
+            case g3::kInfoValue: level = INFO; break;
+            case g3::kWarningValue: level = WARNING; break;
+            case g3::kFatalValue: level = FATAL; break;
+            case g3::kFatalValue+1: level = NOLOG; break;
+        }
+        log_levels::setHighest(level);
+    }
+    std::cout << "setting LOG level: " << level.text << std::endl;
+    std::unique_ptr<LogWorker> logworker{ LogWorker::createLogWorker() };
+    auto sinkHandle = logworker->addSink(
+            std::unique_ptr<CustomSink>(new CustomSink()),
+            &CustomSink::ReceiveLogMessage);
+    // initialize the logger before it can receive LOG calls
+    initializeLogging(logworker.get());
+
 
     // End of argument parsing
 
