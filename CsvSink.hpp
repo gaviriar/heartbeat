@@ -2,8 +2,8 @@
 // Created by unitelabs on 16/06/18.
 //
 // in file Customsink.hpp
-#ifndef CUSTOM_SINK_hpp
-#define CUSTOM_SINK_hpp
+#ifndef CSV_SINK_hpp
+#define CSV_SINK_hpp
 
 #include <string>
 #include <iostream>
@@ -64,4 +64,4 @@ private:
         return out;
     }
 };
-#endif /* CUSTOM_SINK_hpp */
+#endif /* CSV_SINK_hpp */

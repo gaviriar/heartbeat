@@ -8,6 +8,7 @@
 
 #include "RPPG.hpp"
 
+#include <future>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/core.hpp>
@@ -30,7 +31,7 @@
 #define MIN_DISTANCE 25
 
 // LOG(level) is the API for the stream log
-#define LOGTOCSV(level, instance, ...) instance->call(&CsvSink::write, ##__VA_ARGS__);
+#define LOGTOCSV(instance, ...) std::async(&CsvSink::receiveCsvLine, *instance, ##__VA_ARGS__);
 
 using namespace cv;
 using namespace std;
@@ -43,7 +44,7 @@ bool RPPG::load(const rPPGAlgorithm algorithm,
                 const int minSignalSize, const int maxSignalSize,
                 const string &logPath, const string &classifierPath,
                 const bool log, const bool gui,
-                LogWorker& logWorker) {
+                unique_ptr<LogWorker>& logWorker) {
 
     this->algorithm = algorithm;
     this->guiMode = gui;
@@ -69,29 +70,18 @@ bool RPPG::load(const rPPGAlgorithm algorithm,
     std::ostringstream path_2;
     path_2 << logfilepath << "_bpm.csv";
 
-    auto bpmHandler = logWorker.addSink(
-            std::unique_ptr<CsvSink>(new CsvSink(path_2.str())),
-            &CsvSink::receiveCsvLine);
-
-    LOGTOCSV(INFO, bpmHandler, "time", "face_valid", "mean", "min", "max");
-    
-    logfile.open(path_2.str());
-    logfile << "time;face_valid;mean;min;max\n";
-    logfile.flush();
+    _bpmSink = std::shared_ptr<CsvSink>(new CsvSink(path_2.str()));
 
     // Logging bpm detailed
     std::ostringstream path_3;
     path_3 << logfilepath << "_bpmAll.csv";
-    logfileDetailed.open(path_3.str());
-    logfileDetailed << "time;face_valid;bpm\n";
-    logfileDetailed.flush();
-
+    _bpmAllSink = std::shared_ptr<CsvSink>(new CsvSink(path_3.str()));
+    _bpmSink->write("time;face_valid;mean;min;max");
+    _bpmAllSink->write("time;face_valid;bpm");
     return true;
 }
 
 void RPPG::exit() {
-    logfile.close();
-    logfileDetailed.close();
 }
 
 void RPPG::processFrame(Mat &frameRGB, Mat &frameGray, int time) {
@@ -371,19 +361,11 @@ void RPPG::extractSignal_g() {
 
     // Logging
     if (logMode) {
-        std::ofstream log;
-        std::ostringstream filepath;
-        filepath << logfilepath << "_signal_" << time << ".csv";
-        log.open(filepath.str());
-        log << "re;g;g_den;g_det;g_mav\n";
+        auto sink = new CsvSink(logfilepath + "_signal_" + to_string(time)+ ".csv");
+        sink->write("re;g;g_den;g_det;g_mav");
         for (int i = 0; i < s.rows; i++) {
-            log << re.at<bool>(i, 0) << ";";
-            log << s.at<double>(i, 1) << ";";
-            log << s_den.at<double>(i, 0) << ";";
-            log << s_det.at<double>(i, 0) << ";";
-            log << s_mav.at<double>(i, 0) << "\n";
+            sink->write(re.at<bool>(i, 0), s.at<double>(i, 1), s_den.at<double>(i, 0), s_det.at<double>(i, 0), s_mav.at<double>(i, 0));
         }
-        log.close();
     }
 }
 
@@ -484,26 +466,24 @@ void RPPG::extractSignal_xminay() {
 
     // Logging
     if (logMode) {
-        std::ofstream log;
-        std::ostringstream filepath;
-        filepath << logfilepath << "_signal_" << time << ".csv";
-        log.open(filepath.str());
-        log << "r;g;b;r_den;g_den;b_den;x_s;y_s;x_f;y_f;s;s_f\n";
+        auto sink = new CsvSink(logfilepath + "_signal_" + std::to_string(time) + ".csv");
+        sink->write("r;g;b;r_den;g_den;b_den;x_s;y_s;x_f;y_f;s;s_f");
         for (int i = 0; i < s.rows; i++) {
-            log << s.at<double>(i, 0) << ";";
-            log << s.at<double>(i, 1) << ";";
-            log << s.at<double>(i, 2) << ";";
-            log << s_den.at<double>(i, 0) << ";";
-            log << s_den.at<double>(i, 1) << ";";
-            log << s_den.at<double>(i, 2) << ";";
-            log << x_s.at<double>(i, 0) << ";";
-            log << y_s.at<double>(i, 0) << ";";
-            log << x_f.at<double>(i, 0) << ";";
-            log << y_f.at<double>(i, 0) << ";";
-            log << xminay.at<double>(i, 0) << ";";
-            log << s_f.at<double>(i, 0) << "\n";
+            sink->write(
+                    s.at<double>(i, 0),
+                    s.at<double>(i, 1),
+                    s.at<double>(i, 2),
+                    s_den.at<double>(i, 0),
+                    s_den.at<double>(i, 1),
+                    s_den.at<double>(i, 2),
+                    x_s.at<double>(i, 0),
+                    y_s.at<double>(i, 0),
+                    x_f.at<double>(i, 0),
+                    y_f.at<double>(i, 0),
+                    xminay.at<double>(i, 0),
+                    s_f.at<double>(i, 0)
+            );
         }
-        log.close();
     }
 }
 
@@ -532,18 +512,13 @@ void RPPG::estimateHeartrate() {
 
         // Logging
         if (logMode) {
-            std::ofstream log;
-            std::ostringstream filepath;
-            filepath << logfilepath << "_estimation_" << time << ".csv";
-            log.open(filepath.str());
-            log << "i;powerSpectrum\n";
+            auto sink = new CsvSink(logfilepath + "_estimation_" + std::to_string(time) + ".csv");
+            sink->write("i;powerSpectrum");
             for (int i = 0; i < powerSpectrum.rows; i++) {
                 if (low <= i && i <= high) {
-                    log << i << ";";
-                    log << powerSpectrum.at<double>(i, 0) << "\n";
+                    sink->write(i, powerSpectrum.at<double>(i, 0));
                 }
             }
-            log.close();
         }
     }
 

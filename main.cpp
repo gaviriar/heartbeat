@@ -193,7 +193,7 @@ int main(int argc, char * argv[]) {
               samplingFrequency, rescanFrequency,
               minSignalSize, maxSignalSize,
               LOG_PATH, CLASSIFIER_PATH,
-              log, gui);
+              log, gui, logworker);
 
     // Load baseline if necessary
     Baseline baseline = Baseline();

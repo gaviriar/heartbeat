@@ -14,7 +14,9 @@
 #include <string>
 
 #include <opencv2/objdetect/objdetect.hpp>
+#include <g3log/g3log.hpp>
 #include <g3log/logworker.hpp>
+#include "CsvSink.hpp"
 
 /**
  * RPPG class performs heartrate calculation from input image
@@ -34,7 +36,7 @@ public:
               const double samplingFrequency, const double rescanFrequency,
               const int minSignalSize, const int maxSignalSize,
               const std::string &logPath, const std::string &classifierPath,
-              const bool log, const bool gui, g3::LogWorker& logWorker);
+              const bool log, const bool gui, std::unique_ptr<g3::LogWorker>& logWorker);
 
     /**
      * Process frame and estimate the heartrate
@@ -119,6 +121,9 @@ private:
     std::ofstream logfile;
     std::ofstream logfileDetailed;
     std::string logfilepath;
+    std::shared_ptr<CsvSink> _signalLog;
+    std::shared_ptr<CsvSink> _bpmSink;
+    std::shared_ptr<CsvSink> _bpmAllSink;
 };
 
 
