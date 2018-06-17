@@ -487,7 +487,7 @@ void RPPG::extractSignal_xminay() {
     }
 }
 
-void RPPG::estimateHeartrate() {
+double RPPG::estimateHeartrate() {
 
     powerSpectrum = cv::Mat(s_f.size(), CV_32F);
     timeToFrequency(s_f, powerSpectrum, true);
@@ -535,6 +535,7 @@ void RPPG::estimateHeartrate() {
         LOG(INFO) << "meanBPM=" << meanBpm << " minBpm=" << minBpm << " maxBpm=" << maxBpm << std::endl;
 
         bpms.pop_back(bpms.rows);
+        return meanBpm;
     }
 }
 

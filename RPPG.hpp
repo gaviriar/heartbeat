@@ -62,7 +62,7 @@ private:
     void extractSignal_g();
     void extractSignal_pca();
     void extractSignal_xminay();
-    void estimateHeartrate();
+    double estimateHeartrate();
     void draw(cv::Mat &frameRGB);
     void invalidateFace();
     void log();
